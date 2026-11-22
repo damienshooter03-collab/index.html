@@ -1,0 +1,1537 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Under Development</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a Log In / Sign Up card on black. After login: server rail (Direct Messages, +) | sidebar (Friends, DM list, account) | main area. All black. */
+  :root {
+    --bg: #000000;
+    --fg: #ffffff;
+    --muted: #9a9aa2;
+    --surface: #101012;
+    --surface-hover: #1b1b1f;
+    --border: #2a2a2e;
+    --good: #3fb950;
+    --bad: #f85149;
+    --idle: #d29922;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box;
+  }
+  button { font-family: inherit; }
+  .app { height: 100%; display: flex; min-width: 0; }
+
+  /* Log in / Sign up */
+  .auth { height: 100%; overflow-y: auto; display: flex; }
+  .auth-card {
+    margin: auto; width: 100%; max-width: 440px; box-sizing: border-box;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 28px 24px; margin-top: max(24px, auto); margin-bottom: 24px;
+  }
+  .auth-card h1 { margin: 0; font-size: 1.5rem; font-weight: 600; text-align: center; }
+  .auth-sub { margin: 8px 0 24px; color: var(--muted); font-size: .9rem; line-height: 1.5; text-align: center; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .field label { font-size: .85rem; font-weight: 500; }
+  .field input[type="text"], .field input[type="email"], .field input[type="password"], .field input[type="date"] {
+    width: 100%; box-sizing: border-box; padding: 11px 12px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--fg); font: inherit;
+  }
+  .field input[readonly] { color: var(--muted); }
+  .field input[aria-invalid="true"] { border-color: var(--bad); }
+  .field input::placeholder { color: var(--muted); }
+  .field input:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .err { color: var(--bad); font-size: .8rem; line-height: 1.4; }
+  .err:empty { display: none; }
+  .form-err { margin: 0 0 12px; text-align: center; }
+  .terms { display: flex; align-items: flex-start; gap: 10px; font-size: .88rem; line-height: 1.4; }
+  .terms input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: #ffffff; flex: none; }
+  .terms input:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .tos { text-decoration: underline; }
+  .hint { color: var(--muted); font-size: .8rem; line-height: 1.4; }
+  .terms-wrap { margin-bottom: 20px; }
+  .terms-wrap .hint { margin: 6px 0 0 28px; }
+  .terms-wrap .err { margin-left: 28px; }
+  .wide { width: 100%; }
+  .switch { margin: 18px 0 0; text-align: center; color: var(--muted); font-size: .88rem; }
+  .link { background: none; border: 0; padding: 0; color: var(--fg); font: inherit; text-decoration: underline; cursor: pointer; }
+  .link:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+
+  /* Rail */
+  .rail { display: flex; flex-direction: column; gap: 12px; padding-top: 16px; margin-right: 12px; flex: none; }
+  .add, .dm {
+    width: 48px; height: 48px; padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--fg);
+    font: 400 28px/1 var(--font-body);
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: background-color .15s, border-radius .15s;
+  }
+  .add:hover, .dm:hover, .dm[aria-current="true"] { background: var(--surface-hover); border-radius: 16px; }
+  .dm[aria-current="true"] { border-color: var(--fg); }
+  .dm svg { width: 26px; height: 26px; }
+
+  /* Sidebar */
+  .side {
+    width: 240px; flex: none; box-sizing: border-box; min-height: 0;
+    border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+    padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto;
+  }
+  .side-item {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; box-sizing: border-box; padding: 8px 10px;
+    background: transparent; border: 0; border-radius: 8px;
+    color: var(--muted); font: 500 .95rem var(--font-body); text-align: left; cursor: pointer;
+  }
+  .side-item:hover, .side-item[aria-current="true"] { background: var(--surface-hover); color: var(--fg); }
+  .side-item svg { width: 24px; height: 24px; flex: none; }
+  .side-item .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .side-label { margin: 16px 10px 4px; color: var(--muted); font: 600 .72rem var(--font-body); letter-spacing: .06em; text-transform: uppercase; }
+  .empty-side { margin: 0; padding: 8px 10px; color: var(--muted); font-size: .85rem; }
+  .me { margin-top: auto; padding: 10px 6px 0; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .me-info { flex: 1; min-width: 0; line-height: 1.25; }
+  .me-name { font-weight: 600; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .me-user { color: var(--muted); font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .badge {
+    min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
+    border-radius: 9px; background: var(--fg); color: var(--bg);
+    font-size: .72rem; font-weight: 600; display: inline-grid; place-items: center;
+  }
+
+  /* Your profile (opens from the account panel) */
+  .me-btn { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; padding: 4px; background: transparent; border: 0; border-radius: 8px; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .me-btn:hover { background: var(--surface-hover); }
+  .me-btn .me-name, .me-btn .me-user { display: block; }
+  .me-btn:focus-visible, .p-row:focus-visible, .p-note:focus-visible, .p-note-input:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .avatar.online[data-status="idle"]::after { background: var(--idle); }
+  .avatar.online[data-status="dnd"]::after { background: var(--bad); }
+  .avatar.online[data-status="invisible"]::after { background: var(--muted); }
+  .avatar.xl { width: 80px; height: 80px; font-size: 2rem; border: 6px solid var(--surface); box-sizing: border-box; }
+  .avatar.xl.online::after { width: 22px; height: 22px; border-width: 4px; right: -2px; bottom: -2px; }
+  .profile {
+    position: fixed; z-index: 25; width: 300px; max-width: calc(100vw - 16px); box-sizing: border-box;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    overflow-y: auto; box-shadow: 0 8px 32px rgba(0, 0, 0, .7);
+  }
+  .p-banner { height: 64px; }
+  .p-top { position: relative; padding: 0 16px; }
+  .p-avwrap { position: relative; width: 80px; height: 80px; margin-top: -40px; }
+  .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+  .p-cam {
+    position: absolute; left: -4px; bottom: -4px; width: 30px; height: 30px; padding: 0;
+    border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--fg);
+    display: grid; place-items: center; cursor: pointer; z-index: 1;
+  }
+  .p-cam:hover { background: var(--surface-hover); }
+  .p-cam:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .p-cam svg { width: 16px; height: 16px; }
+  .p-msg { margin: -6px 16px 12px; color: var(--muted); font-size: .8rem; }
+  .p-note, .p-note-input {
+    position: absolute; left: 104px; top: -30px; max-width: calc(100% - 120px); box-sizing: border-box;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 6px 12px;
+    color: var(--muted); font: 400 .8rem var(--font-body);
+  }
+  .p-note { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .p-note span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .p-note.has { color: var(--fg); }
+  .p-note-input { width: calc(100% - 120px); color: var(--fg); }
+  .p-name { margin: 10px 16px 0; font-size: 1.2rem; font-weight: 700; overflow-wrap: anywhere; }
+  .p-user { margin: 2px 16px 14px; color: var(--muted); font-size: .88rem; overflow-wrap: anywhere; }
+  .p-body { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .p-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
+  .p-label { padding: 8px 10px 0; color: var(--muted); font: 600 .72rem var(--font-body); letter-spacing: .06em; text-transform: uppercase; }
+  .p-about { padding: 4px 10px 10px; font-size: .85rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .p-row { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; padding: 10px; background: transparent; border: 0; border-radius: 6px; color: var(--fg); font: 500 .9rem var(--font-body); text-align: left; cursor: pointer; }
+  .p-row:hover { background: var(--surface-hover); }
+  .p-row .chev { margin-left: auto; color: var(--muted); }
+  .p-row .tick { margin-left: auto; }
+  .p-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .p-sub .p-row { padding-left: 28px; align-items: flex-start; }
+  .p-sub .p-dot { margin-top: 5px; }
+  .p-sub .tick { margin-top: 1px; }
+  .p-opt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .p-optdesc { color: var(--muted); font-weight: 400; font-size: .78rem; line-height: 1.35; }
+
+  /* Settings button and (empty) settings page */
+  .gear { width: 32px; height: 32px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer; flex: none; }
+  .gear:hover { color: var(--fg); background: var(--surface-hover); }
+  .gear svg { width: 20px; height: 20px; }
+  .gear:focus-visible, .settings-close:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .settings {
+    position: fixed; inset: 0; z-index: 30; background: var(--bg);
+    display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top, 0px) max(16px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(16px, env(safe-area-inset-left, 0px));
+  }
+  .settings-bar { display: flex; align-items: center; justify-content: space-between; min-height: 56px; border-bottom: 1px solid var(--border); flex: none; }
+  .settings-bar h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+  .settings-close { width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font: 400 24px/1 var(--font-body); cursor: pointer; }
+  .settings-close:hover { color: var(--fg); background: var(--surface-hover); }
+  .settings-body { flex: 1; min-height: 0; display: flex; }
+  .settings-nav { width: 220px; flex: none; box-sizing: border-box; padding: 12px 8px; border-right: 1px solid var(--border); overflow-y: auto; }
+  .settings-nav .side-label { margin-top: 4px; }
+  .settings-content { flex: 1; min-width: 0; overflow-y: auto; }
+  .acct { max-width: 640px; box-sizing: border-box; padding: 24px 16px; }
+  .acct h2 { margin: 0 0 16px; font-size: 1.25rem; font-weight: 600; }
+  .notice { margin: 0 0 16px; color: var(--good); font-size: .9rem; }
+  .acct-card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .acct-row { padding: 14px 16px; border-top: 1px solid var(--border); }
+  .acct-row:first-child { border-top: 0; }
+  .acct-head { display: flex; align-items: center; gap: 12px; }
+  .acct-info { flex: 1; min-width: 0; }
+  .acct-label { color: var(--muted); font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+  .acct-value { margin-top: 4px; overflow-wrap: anywhere; }
+  .acct-value.unset { color: var(--muted); }
+  .acct-panel { margin: 14px 0 0; padding-top: 14px; border-top: 1px solid var(--border); }
+  .acct-panel .err { margin: 0 0 12px; }
+  .acct-panel > p.lead { margin: 0 0 12px; font-size: .9rem; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
+  .field select {
+    width: 100%; box-sizing: border-box; padding: 11px 12px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--fg); font: inherit;
+  }
+  .field select:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .about-card { margin-top: 16px; }
+  .about-card .field { margin-bottom: 0; }
+  .unsaved { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--bg); border-radius: 0 0 12px 12px; }
+  .unsaved span { font-size: .88rem; }
+  .field textarea {
+    width: 100%; box-sizing: border-box; padding: 11px 12px; resize: vertical; min-height: 96px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--fg); font: inherit; line-height: 1.5;
+  }
+  .field textarea::placeholder { color: var(--muted); }
+  .field textarea:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .acct-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .demo { border: 1px dashed var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: .85rem; line-height: 1.5; color: var(--muted); }
+  .demo strong { color: var(--fg); font-size: 1rem; letter-spacing: .15em; }
+  @media (max-width: 720px) {
+    .settings-body { flex-direction: column; }
+    .settings-nav { width: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+  }
+
+  /* Avatars */
+  .avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: .9rem; flex: none; position: relative; }
+  .avatar.sm { width: 28px; height: 28px; font-size: .8rem; }
+  .avatar.online::after {
+    content: ""; position: absolute; right: -2px; bottom: -2px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--good); border: 2px solid var(--bg); box-sizing: border-box;
+  }
+
+  /* Main */
+  .main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+  .bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; padding: 8px 16px; min-height: 48px; box-sizing: border-box; border-bottom: 1px solid var(--border); flex: none; }
+  .bar-title { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; border: 0; border-radius: 6px; padding: 6px 12px;
+    color: var(--muted); font: 500 .9rem var(--font-body); cursor: pointer;
+  }
+  .tab:hover, .tab[aria-pressed="true"] { background: var(--surface-hover); color: var(--fg); }
+  .tab-add { border: 1px solid var(--border); color: var(--fg); margin-left: 8px; }
+  .addform { max-width: 560px; }
+  .addform h2 { margin: 0 0 6px; font-size: 1.1rem; font-weight: 600; }
+  .addform .hint { margin: 0 0 16px; font-size: .9rem; line-height: 1.5; }
+  .addrow { display: flex; gap: 8px; flex-wrap: wrap; }
+  .addrow input {
+    flex: 1 1 200px; min-width: 0; box-sizing: border-box; padding: 12px 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--fg); font: inherit;
+  }
+  .addrow input::placeholder { color: var(--muted); }
+  .addrow input:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  .btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); padding: 10px 16px; }
+  .btn.primary:hover { background: #d9d9de; }
+  .addstatus { min-height: 1.2em; margin: 12px 0 0; font-size: .88rem; color: var(--good); }
+  .addstatus.err { color: var(--bad); }
+  .list { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; }
+  .list-label { margin: 0 0 8px; color: var(--muted); font: 600 .72rem var(--font-body); letter-spacing: .06em; text-transform: uppercase; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-top: 1px solid var(--border); }
+  .row:hover { background: var(--surface); }
+  .row .info { flex: 1; min-width: 0; }
+  .row .who { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .sub { margin-top: 2px; color: var(--muted); font-size: .82rem; }
+  .actions { display: flex; gap: 8px; flex: none; }
+  .btn {
+    border: 1px solid var(--border); background: var(--surface); color: var(--fg);
+    border-radius: 8px; padding: 6px 12px; font: 500 .82rem var(--font-body); cursor: pointer;
+  }
+  .btn:hover { background: var(--surface-hover); }
+  .btn.primary.wide { padding: 12px 16px; font-size: .95rem; }
+  .empty { padding: 32px 12px; color: var(--muted); text-align: center; font-size: .9rem; }
+
+  /* Conversation */
+  .msgs { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+  .intro { margin: 0; color: var(--muted); font-size: .9rem; }
+  .msg { display: flex; gap: 12px; }
+  .msg .meta { font-weight: 600; }
+  .msg .time { margin-left: 8px; color: var(--muted); font-weight: 400; font-size: .75rem; }
+  .msg p { margin: 2px 0 0; line-height: 1.45; overflow-wrap: anywhere; }
+  .msg .body { min-width: 0; }
+  .composer { padding: 0 16px 16px; flex: none; }
+  .composer input {
+    width: 100%; box-sizing: border-box; padding: 12px 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--fg); font: inherit;
+  }
+  .composer input::placeholder { color: var(--muted); }
+
+  .add:focus-visible, .dm:focus-visible, .side-item:focus-visible, .tab:focus-visible, .btn:focus-visible, .opt:focus-visible, .close:focus-visible, .composer input:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+
+  /* Add-server dialog */
+  .overlay {
+    position: fixed; inset: 0; z-index: 20;
+    background: rgba(0, 0, 0, .78);
+    display: flex; align-items: center; justify-content: center;
+    padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  }
+  .dialog { position: relative; box-sizing: border-box; width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .dialog h2 { margin: 0; font-size: 1.25rem; font-weight: 600; text-align: center; }
+  .dialog .sub { margin: 8px 0 20px; color: var(--muted); font-size: .9rem; line-height: 1.5; text-align: center; }
+  .close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font: 400 22px/1 var(--font-body); cursor: pointer; }
+  .close:hover { color: var(--fg); background: var(--surface-hover); }
+  .opts { display: flex; flex-direction: column; gap: 10px; }
+  .opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; box-sizing: border-box; padding: 16px; background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 10px; font: 500 1rem var(--font-body); text-align: left; cursor: pointer; transition: background-color .15s; }
+  .opt:hover { background: var(--surface-hover); }
+  .opt small { display: block; margin-top: 4px; color: var(--muted); font-weight: 400; font-size: .82rem; }
+  .opt .chev { color: var(--muted); font-size: 1.25rem; flex: none; }
+  .note { min-height: 1.2em; margin: 16px 0 0; color: var(--muted); font-size: .85rem; text-align: center; }
+
+  @media (max-width: 720px) {
+    .app { flex-direction: column; }
+    .rail { flex-direction: row; padding: 12px 0; margin-right: 0; }
+    .side { width: auto; max-height: 36%; border-left: 0; border-right: 0; border-top: 1px solid var(--border); }
+    .row { flex-wrap: wrap; }
+    .row .actions { width: 100%; justify-content: flex-end; }
+  }
+  @media (prefers-reduced-motion: reduce) { .add, .dm, .opt { transition: none; } }
+</style>
+
+<!-- Log in / Sign up -->
+<div class="auth" id="auth">
+  <div class="auth-card">
+    <form id="login-form" novalidate>
+      <h1>Log In</h1>
+      <p class="auth-sub">Welcome back. Enter your details to continue.</p>
+      <p class="err form-err" id="li-form-err" role="alert"></p>
+      <div class="field">
+        <label for="li-id">Email or username</label>
+        <input id="li-id" type="text" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="li-password">Password</label>
+        <input id="li-password" type="password" autocomplete="current-password">
+      </div>
+      <button class="btn primary wide" type="submit">Log In</button>
+      <p class="switch">Need an account? <button class="link" id="to-signup" type="button">Sign Up</button></p>
+    </form>
+
+    <form id="signup-form" novalidate hidden>
+      <h1>Sign Up</h1>
+      <p class="auth-sub">Create your account to start adding friends.</p>
+      <p class="err form-err" id="su-form-err" role="alert"></p>
+      <div class="field">
+        <label for="su-email">Email</label>
+        <input id="su-email" type="email" autocomplete="email" aria-describedby="su-email-err">
+        <span class="err" id="su-email-err"></span>
+      </div>
+      <div class="field">
+        <label for="su-display">Display name</label>
+        <input id="su-display" type="text" maxlength="32" autocomplete="nickname" aria-describedby="su-display-err">
+        <span class="err" id="su-display-err"></span>
+      </div>
+      <div class="field">
+        <label for="su-username">Username</label>
+        <input id="su-username" type="text" maxlength="32" autocomplete="off" autocapitalize="none" aria-describedby="su-username-hint su-username-err">
+        <span class="hint" id="su-username-hint">2 to 32 characters: letters, numbers, underscores and full stops.</span>
+        <span class="err" id="su-username-err"></span>
+      </div>
+      <div class="field">
+        <label for="su-password">Password</label>
+        <input id="su-password" type="password" autocomplete="new-password" aria-describedby="su-password-err">
+        <span class="err" id="su-password-err"></span>
+      </div>
+      <div class="field">
+        <label for="su-dob">Date of birth</label>
+        <input id="su-dob" type="date" aria-describedby="su-dob-err">
+        <span class="err" id="su-dob-err"></span>
+      </div>
+      <div class="field">
+        <label for="su-age">Age</label>
+        <input id="su-age" type="text" readonly aria-readonly="true" placeholder="Filled in from your date of birth">
+      </div>
+      <div class="terms-wrap">
+        <label class="terms" for="su-terms">
+          <input id="su-terms" type="checkbox" aria-describedby="su-terms-hint su-terms-err">
+          <span>I agree to the <span class="tos">Terms of Service</span></span>
+        </label>
+        <p class="hint" id="su-terms-hint">The Terms of Service will be published soon.</p>
+        <span class="err" id="su-terms-err"></span>
+      </div>
+      <button class="btn primary wide" type="submit">Sign Up</button>
+      <p class="switch">Already have an account? <button class="link" id="to-login" type="button">Log In</button></p>
+    </form>
+  </div>
+</div>
+
+<div class="app" id="app" hidden>
+  <nav class="rail" aria-label="Servers">
+    <button class="dm" id="dm" type="button" aria-label="Direct Messages" aria-current="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H10l-4.5 3.5V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>
+    </button>
+    <button class="add" id="add" type="button" aria-label="Add a server" aria-haspopup="dialog">+</button>
+  </nav>
+
+  <aside class="side" aria-label="Direct Messages">
+    <button class="side-item" id="nav-friends" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c3 .2 5.5 2 5.5 5.3"/></svg>
+      <span class="name">Friends</span>
+      <span class="badge" id="nav-badge" hidden></span>
+    </button>
+    <div class="side-label">Direct Messages</div>
+    <div id="dm-list"></div>
+    <div class="me">
+      <button class="me-btn" id="me-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Open your profile">
+        <span id="me-avatar"></span>
+        <span class="me-info">
+          <span class="me-name" id="me-name"></span>
+          <span class="me-user" id="me-user"></span>
+        </span>
+      </button>
+      <button class="gear" id="settings-btn" type="button" aria-label="User settings" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main" id="main"></main>
+</div>
+
+<div class="profile" id="profile" role="dialog" aria-label="Your profile" hidden></div>
+
+<div class="settings" id="settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+  <div class="settings-bar">
+    <h2 id="settings-title">Settings</h2>
+    <button class="settings-close" id="settings-close" type="button" aria-label="Close settings">&times;</button>
+  </div>
+  <div class="settings-body">
+    <nav class="settings-nav" aria-label="Settings sections">
+      <div class="side-label">User Settings</div>
+      <button class="side-item" id="settings-account" type="button" aria-current="true">
+        <span class="name">Account</span>
+      </button>
+    </nav>
+    <div class="settings-content" id="account-content" role="region" aria-label="Account"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <button class="close" id="close" type="button" aria-label="Close">&times;</button>
+    <h2 id="dlg-title">Add a server</h2>
+    <p class="sub">Start a new server or join one that already exists.</p>
+    <div class="opts">
+      <button class="opt" type="button" data-msg="Server templates are coming soon.">
+        <span>Create my own<small>Set up a server for you and your friends.</small></span>
+        <span class="chev" aria-hidden="true">&rsaquo;</span>
+      </button>
+      <button class="opt" type="button" data-msg="Joining a server by invite is coming soon.">
+        <span>Join a server<small>Have an invite already? Join a friend's server.</small></span>
+        <span class="chev" aria-hidden="true">&rsaquo;</span>
+      </button>
+    </div>
+    <p class="note" id="note" role="status"></p>
+  </div>
+</div>
+
+<script>
+  /* ---------- State ---------- */
+  var friends = [];
+  var pending = [];
+  var dms = [];
+  var currentUser = null;
+  var view = { type: "friends", tab: "all" };
+
+  /* ---------- Storage (this browser only; no server yet) ---------- */
+  var mem = {};
+  function store(key, val) {
+    mem[key] = val;
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+  }
+  function load(key, def) {
+    try {
+      var s = localStorage.getItem(key);
+      if (s != null) return JSON.parse(s);
+    } catch (e) {}
+    return key in mem ? mem[key] : def;
+  }
+  function loadAccounts() { return load("accounts_v1", []); }
+
+  /* ---------- Password hashing ---------- */
+  function toHex(buf) {
+    var a = new Uint8Array(buf), s = "";
+    for (var i = 0; i < a.length; i++) s += ("0" + a[i].toString(16)).slice(-2);
+    return s;
+  }
+  function fromHex(hex) {
+    var a = new Uint8Array(hex.length / 2);
+    for (var i = 0; i < a.length; i++) a[i] = parseInt(hex.substr(i * 2, 2), 16);
+    return a;
+  }
+  function hashPassword(pw, saltHex) {
+    var enc = new TextEncoder();
+    return crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveBits"]).then(function (key) {
+      return crypto.subtle.deriveBits({ name: "PBKDF2", salt: fromHex(saltHex), iterations: 150000, hash: "SHA-256" }, key, 256);
+    }).then(toHex);
+  }
+  function randomSalt() { return toHex(crypto.getRandomValues(new Uint8Array(16))); }
+
+  /* ---------- Helpers ---------- */
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  var shades = ["#2b2b31", "#34343b", "#3d3d45", "#26262c"];
+  function avatar(name, small, online, img) {
+    var a = el("span", "avatar" + (small ? " sm" : "") + (online ? " online" : ""), name.charAt(0).toUpperCase());
+    var h = 0;
+    for (var i = 0; i < name.length; i++) h = (h + name.charCodeAt(i)) % shades.length;
+    a.style.background = shades[h];
+    if (img) {
+      a.textContent = "";
+      var im = el("img", "avatar-img");
+      im.src = img;
+      im.alt = "";
+      a.appendChild(im);
+    }
+    return a;
+  }
+  function btn(label, onClick) {
+    var b = el("button", "btn", label);
+    b.type = "button";
+    b.addEventListener("click", onClick);
+    return b;
+  }
+  function $(id) { return document.getElementById(id); }
+  function findDm(name) {
+    for (var i = 0; i < dms.length; i++) if (dms[i].name === name) return dms[i];
+    return null;
+  }
+  function openDm(name) {
+    if (!findDm(name)) dms.unshift({ name: name, messages: [] });
+    view = { type: "dm", name: name };
+    render();
+  }
+  function incomingCount() {
+    var n = 0;
+    for (var i = 0; i < pending.length; i++) if (pending[i].dir === "in") n++;
+    return n;
+  }
+  function nowTime() {
+    return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  /* ---------- Sign up / Log in ---------- */
+  var MIN_AGE = 13;
+  var loginForm = $("login-form");
+  var signupForm = $("signup-form");
+
+  function showAuthForm(which) {
+    loginForm.hidden = which !== "login";
+    signupForm.hidden = which !== "signup";
+    var first = which === "login" ? $("li-id") : $("su-email");
+    first.focus();
+  }
+  function ageFrom(dob) {
+    var p = dob.split("-");
+    if (p.length !== 3) return null;
+    var y = +p[0], m = +p[1] - 1, d = +p[2];
+    var t = new Date();
+    var age = t.getFullYear() - y;
+    if (t.getMonth() < m || (t.getMonth() === m && t.getDate() < d)) age--;
+    return age;
+  }
+  function setErr(id, msg) {
+    var e = $(id + "-err");
+    e.textContent = msg || "";
+    var input = $(id);
+    if (input) {
+      if (msg) input.setAttribute("aria-invalid", "true");
+      else input.removeAttribute("aria-invalid");
+    }
+  }
+  function todayStr() {
+    var t = new Date();
+    return t.getFullYear() + "-" + ("0" + (t.getMonth() + 1)).slice(-2) + "-" + ("0" + t.getDate()).slice(-2);
+  }
+
+  $("su-dob").max = todayStr();
+  $("su-dob").min = "1900-01-01";
+  $("su-dob").addEventListener("input", function () {
+    var a = this.value ? ageFrom(this.value) : null;
+    $("su-age").value = a != null && a >= 0 && a < 130 ? String(a) : "";
+  });
+  $("to-signup").addEventListener("click", function () { showAuthForm("signup"); });
+  $("to-login").addEventListener("click", function () { showAuthForm("login"); });
+
+  signupForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var email = $("su-email").value.trim();
+    var display = $("su-display").value.trim();
+    var username = $("su-username").value.trim();
+    var password = $("su-password").value;
+    var dob = $("su-dob").value;
+    var agreed = $("su-terms").checked;
+    var accounts = loadAccounts();
+    var bad = false;
+    function fail(id, msg) { setErr(id, msg); bad = true; }
+
+    $("su-form-err").textContent = "";
+    ["su-email", "su-display", "su-username", "su-password", "su-dob", "su-terms"].forEach(function (id) { setErr(id, ""); });
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail("su-email", "Enter a valid email address.");
+    else if (accounts.some(function (a) { return a.email.toLowerCase() === email.toLowerCase(); })) fail("su-email", "An account with this email already exists.");
+
+    if (!display) fail("su-display", "Enter a display name.");
+
+    if (!/^[A-Za-z0-9_.]{2,32}$/.test(username)) fail("su-username", "Use 2 to 32 letters, numbers, underscores or full stops.");
+    else if (accounts.some(function (a) { return a.username.toLowerCase() === username.toLowerCase(); })) fail("su-username", "That username is taken. Try another.");
+
+    if (password.length < 8) fail("su-password", "Use at least 8 characters.");
+
+    var age = dob ? ageFrom(dob) : null;
+    if (!dob || age == null || age < 0 || age > 130) fail("su-dob", "Enter your date of birth.");
+    else if (age < MIN_AGE) fail("su-dob", "You must be at least " + MIN_AGE + " years old to create an account.");
+
+    if (!agreed) fail("su-terms", "You need to agree to the Terms of Service to continue.");
+    if (bad) return;
+
+    var salt = randomSalt();
+    hashPassword(password, salt).then(function (hash) {
+      var account = { username: username, display: display, email: email, dob: dob, salt: salt, hash: hash };
+      accounts.push(account);
+      store("accounts_v1", accounts);
+      signupForm.reset();
+      $("su-age").value = "";
+      enterApp(account);
+    }).catch(function () {
+      $("su-form-err").textContent = "Couldn't create your account in this browser. Try again.";
+    });
+  });
+
+  loginForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var id = $("li-id").value.trim().toLowerCase();
+    var password = $("li-password").value;
+    var errEl = $("li-form-err");
+    errEl.textContent = "";
+    var account = null;
+    loadAccounts().forEach(function (a) {
+      if (a.username.toLowerCase() === id || a.email.toLowerCase() === id) account = a;
+    });
+    var wrong = "Incorrect username, email or password.";
+    if (!id || !password || !account) { errEl.textContent = wrong; return; }
+    hashPassword(password, account.salt).then(function (hash) {
+      if (hash !== account.hash) { errEl.textContent = wrong; return; }
+      loginForm.reset();
+      enterApp(account);
+    }).catch(function () {
+      errEl.textContent = "Couldn't log you in from this browser. Try again.";
+    });
+  });
+
+  function enterApp(account) {
+    currentUser = account;
+    friends = []; pending = []; dms = [];
+    view = { type: "friends", tab: "all" };
+    store("session_v1", account.username);
+    $("auth").hidden = true;
+    $("app").hidden = false;
+    render();
+  }
+  function logOut() {
+    currentUser = null;
+    store("session_v1", null);
+    closeDialog(true);
+    $("app").hidden = true;
+    $("auth").hidden = false;
+    showAuthForm("login");
+  }
+  /* ---------- Account settings ---------- */
+  var acct = { open: null, step: 1, pending: "", code: "", tries: 0, notice: "", err: "" };
+
+  function updateAccount(oldUsername, changes) {
+    var accs = loadAccounts();
+    for (var i = 0; i < accs.length; i++) {
+      if (accs[i].username === oldUsername) {
+        for (var k in changes) accs[i][k] = changes[k];
+        store("accounts_v1", accs);
+        currentUser = accs[i];
+        if (changes.username) store("session_v1", changes.username);
+        return;
+      }
+    }
+  }
+  function checkPassword(pw) {
+    return hashPassword(pw, currentUser.salt).then(function (h) { return h === currentUser.hash; });
+  }
+  function newCode() {
+    var n = crypto.getRandomValues(new Uint32Array(1))[0] % 1000000;
+    return ("00000" + n).slice(-6);
+  }
+  function acctField(id, label, type, auto) {
+    var wrap = el("div", "field");
+    var l = el("label", null, label);
+    l.htmlFor = id;
+    var input = el("input");
+    input.id = id;
+    input.type = type;
+    input.autocomplete = auto;
+    wrap.appendChild(l);
+    wrap.appendChild(input);
+    return { wrap: wrap, input: input };
+  }
+  var COUNTRIES = [
+    { iso: "AU", name: "Australia", dial: "+61" }, { iso: "AT", name: "Austria", dial: "+43" },
+    { iso: "BE", name: "Belgium", dial: "+32" }, { iso: "BR", name: "Brazil", dial: "+55" },
+    { iso: "CA", name: "Canada", dial: "+1" }, { iso: "CN", name: "China", dial: "+86" },
+    { iso: "DK", name: "Denmark", dial: "+45" }, { iso: "EG", name: "Egypt", dial: "+20" },
+    { iso: "FI", name: "Finland", dial: "+358" }, { iso: "FR", name: "France", dial: "+33" },
+    { iso: "DE", name: "Germany", dial: "+49" }, { iso: "GR", name: "Greece", dial: "+30" },
+    { iso: "HK", name: "Hong Kong", dial: "+852" }, { iso: "IN", name: "India", dial: "+91" },
+    { iso: "ID", name: "Indonesia", dial: "+62" }, { iso: "IE", name: "Ireland", dial: "+353" },
+    { iso: "IL", name: "Israel", dial: "+972" }, { iso: "IT", name: "Italy", dial: "+39" },
+    { iso: "JP", name: "Japan", dial: "+81" }, { iso: "KE", name: "Kenya", dial: "+254" },
+    { iso: "MX", name: "Mexico", dial: "+52" }, { iso: "NL", name: "Netherlands", dial: "+31" },
+    { iso: "NZ", name: "New Zealand", dial: "+64" }, { iso: "NG", name: "Nigeria", dial: "+234" },
+    { iso: "NO", name: "Norway", dial: "+47" }, { iso: "PK", name: "Pakistan", dial: "+92" },
+    { iso: "PH", name: "Philippines", dial: "+63" }, { iso: "PL", name: "Poland", dial: "+48" },
+    { iso: "PT", name: "Portugal", dial: "+351" }, { iso: "SA", name: "Saudi Arabia", dial: "+966" },
+    { iso: "SG", name: "Singapore", dial: "+65" }, { iso: "ZA", name: "South Africa", dial: "+27" },
+    { iso: "KR", name: "South Korea", dial: "+82" }, { iso: "ES", name: "Spain", dial: "+34" },
+    { iso: "SE", name: "Sweden", dial: "+46" }, { iso: "CH", name: "Switzerland", dial: "+41" },
+    { iso: "TR", name: "Türkiye", dial: "+90" }, { iso: "AE", name: "United Arab Emirates", dial: "+971" },
+    { iso: "GB", name: "United Kingdom", dial: "+44" }, { iso: "US", name: "United States", dial: "+1" }
+  ];
+  function countryByIso(iso) {
+    for (var i = 0; i < COUNTRIES.length; i++) if (COUNTRIES[i].iso === iso) return COUNTRIES[i];
+    return null;
+  }
+  function formatPhone(u) {
+    var c = u.phoneCountry ? countryByIso(u.phoneCountry) : null;
+    if (c && u.phone.indexOf(c.dial) === 0) return c.name + " · " + c.dial + " " + u.phone.slice(c.dial.length);
+    return u.phone;
+  }
+  function acctSelect(id, label, selectedIso) {
+    var wrap = el("div", "field");
+    var l = el("label", null, label);
+    l.htmlFor = id;
+    var s = el("select");
+    s.id = id;
+    s.setAttribute("autocomplete", "country");
+    COUNTRIES.forEach(function (c) {
+      var o = el("option", null, c.name + " (" + c.dial + ")");
+      o.value = c.iso;
+      s.appendChild(o);
+    });
+    s.value = selectedIso;
+    wrap.appendChild(l);
+    wrap.appendChild(s);
+    return { wrap: wrap, input: s };
+  }
+  function acctClose(notice) {
+    acct.open = null; acct.step = 1; acct.pending = ""; acct.code = ""; acct.notice = notice || "";
+    renderAccount();
+    renderSide();
+  }
+
+  /* Username and display name: confirm with the current password. */
+  function passwordPanel(key) {
+    var isUser = key === "username";
+    var form = el("form", "acct-panel");
+    form.noValidate = true;
+    var a = acctField("acct-" + key, isUser ? "New username" : "New display name", "text", "off");
+    a.input.maxLength = 32;
+    if (isUser) a.input.setAttribute("autocapitalize", "none");
+    var p = acctField("acct-pw-" + key, "Current password", "password", "current-password");
+    var err = el("p", "err");
+    err.setAttribute("role", "alert");
+    var actions = el("div", "acct-actions");
+    var save = el("button", "btn primary", "Save");
+    save.type = "submit";
+    actions.appendChild(save);
+    actions.appendChild(btn("Cancel", function () { acctClose(); }));
+    form.appendChild(a.wrap);
+    form.appendChild(p.wrap);
+    form.appendChild(err);
+    form.appendChild(actions);
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      err.textContent = "";
+      var v = a.input.value.trim();
+      var pw = p.input.value;
+      if (isUser) {
+        if (!/^[A-Za-z0-9_.]{2,32}$/.test(v)) { err.textContent = "Use 2 to 32 letters, numbers, underscores or full stops."; return; }
+        if (v === currentUser.username) { err.textContent = "That's already your username."; return; }
+        var taken = loadAccounts().some(function (x) { return x.username.toLowerCase() === v.toLowerCase() && x.username !== currentUser.username; });
+        if (taken) { err.textContent = "That username is taken. Try another."; return; }
+      } else {
+        if (!v) { err.textContent = "Enter a display name."; return; }
+        if (v === currentUser.display) { err.textContent = "That's already your display name."; return; }
+      }
+      if (!pw) { err.textContent = "Enter your current password to confirm."; return; }
+      checkPassword(pw).then(function (ok) {
+        if (!ok) { err.textContent = "Incorrect password."; return; }
+        updateAccount(currentUser.username, isUser ? { username: v } : { display: v });
+        acctClose(isUser ? "Username updated." : "Display name updated.");
+      }).catch(function () {
+        err.textContent = "Couldn't check your password. Try again.";
+      });
+    });
+    return form;
+  }
+
+  /* Email and phone number: confirm the new value with a code. */
+  function verifyPanel(key) {
+    var isEmail = key === "email";
+    var noun = isEmail ? "email address" : "phone number";
+    var form = el("form", "acct-panel");
+    form.noValidate = true;
+    var err = el("p", "err", acct.err);
+    err.setAttribute("role", "alert");
+    acct.err = "";
+    var actions = el("div", "acct-actions");
+
+    if (acct.step === 1) {
+      var f = acctField("acct-" + key, "New " + noun, isEmail ? "email" : "text", isEmail ? "email" : "tel");
+      if (isEmail) f.input.type = "text"; /* validated below; keeps one consistent look */
+      if (!isEmail) f.input.setAttribute("inputmode", "tel");
+      var cf = isEmail ? null : acctSelect("acct-country", "Country", currentUser.phoneCountry || "GB");
+      var send = el("button", "btn primary", "Send code");
+      send.type = "submit";
+      actions.appendChild(send);
+      actions.appendChild(btn("Cancel", function () { acctClose(); }));
+      if (cf) form.appendChild(cf.wrap);
+      form.appendChild(f.wrap);
+      form.appendChild(err);
+      form.appendChild(actions);
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        err.textContent = "";
+        var v = f.input.value.trim();
+        if (isEmail) {
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { err.textContent = "Enter a valid email address."; return; }
+          if (v.toLowerCase() === currentUser.email.toLowerCase()) { err.textContent = "That's already your email."; return; }
+          var used = loadAccounts().some(function (x) { return x.email.toLowerCase() === v.toLowerCase(); });
+          if (used) { err.textContent = "An account with this email already exists."; return; }
+        } else {
+          var raw = v.replace(/[\s\-().]/g, "");
+          if (raw.charAt(0) === "+") { err.textContent = "Choose your country above and enter the number without the country code."; return; }
+          var country = countryByIso(cf.input.value);
+          var national = country.iso === "IT" ? raw : raw.replace(/^0+/, "");
+          if (!/^[0-9]{4,12}$/.test(national)) { err.textContent = "Enter a valid phone number for " + country.name + "."; return; }
+          v = country.dial + national;
+          if (v === currentUser.phone) { err.textContent = "That's already your phone number."; return; }
+          acct.pendingCountry = country.iso;
+        }
+        acct.pending = v;
+        acct.code = newCode();
+        acct.tries = 0;
+        acct.step = 2;
+        renderAccount("acct-code");
+      });
+    } else {
+      form.appendChild(el("p", "lead", "We sent a 6-digit code to " + acct.pending + ". Enter it below to confirm the change."));
+      var demo = el("div", "demo");
+      demo.appendChild(document.createTextNode("Demo only: emails and texts can't be sent yet, so your code is shown here: "));
+      demo.appendChild(el("strong", null, acct.code));
+      form.appendChild(demo);
+      var c = acctField("acct-code", "Verification code", "text", "one-time-code");
+      c.input.maxLength = 6;
+      c.input.setAttribute("inputmode", "numeric");
+      var verify = el("button", "btn primary", "Verify");
+      verify.type = "submit";
+      actions.appendChild(verify);
+      var back = el("button", "link", "Use a different " + (isEmail ? "email" : "number"));
+      back.type = "button";
+      back.addEventListener("click", function () { acct.step = 1; renderAccount("acct-" + key); });
+      actions.appendChild(back);
+      actions.appendChild(btn("Cancel", function () { acctClose(); }));
+      form.appendChild(c.wrap);
+      form.appendChild(err);
+      form.appendChild(actions);
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        err.textContent = "";
+        if (c.input.value.trim() === acct.code) {
+          updateAccount(currentUser.username, isEmail ? { email: acct.pending } : { phone: acct.pending, phoneCountry: acct.pendingCountry });
+          acctClose((isEmail ? "Email" : "Phone number") + " updated. Your new " + (isEmail ? "email" : "number") + " is verified.");
+          return;
+        }
+        acct.tries++;
+        if (acct.tries >= 5) {
+          acct.step = 1;
+          acct.err = "Too many incorrect codes. Send a new code to try again.";
+          renderAccount("acct-" + key);
+          return;
+        }
+        err.textContent = "That code is incorrect. " + (5 - acct.tries) + " attempts left.";
+      });
+    }
+    return form;
+  }
+
+  /* About me: always a text box. Typing a change brings up a Cancel / Save bar. */
+  var ABOUT_MAX = 200;
+  function aboutSection() {
+    var card = el("div", "acct-card about-card");
+    var row = el("div", "acct-row");
+    var field = el("div", "field");
+    var l = el("label", "acct-label", "About me");
+    l.htmlFor = "acct-about";
+    var ta = el("textarea");
+    ta.id = "acct-about";
+    ta.rows = 4;
+    ta.maxLength = ABOUT_MAX;
+    ta.placeholder = "Tell people who you are.";
+    ta.value = acct.aboutDraft != null ? acct.aboutDraft : (currentUser.about || "");
+    var count = el("span", "hint", "");
+    field.appendChild(l);
+    field.appendChild(ta);
+    field.appendChild(count);
+    row.appendChild(field);
+    card.appendChild(row);
+
+    var bar = el("div", "unsaved");
+    bar.setAttribute("role", "status");
+    bar.hidden = true;
+    bar.appendChild(el("span", null, "You have unsaved changes."));
+    var actions = el("div", "acct-actions");
+    actions.appendChild(btn("Cancel", function () {
+      acct.aboutDraft = null;
+      renderAccount();
+    }));
+    var save = btn("Save", function () {
+      updateAccount(currentUser.username, { about: ta.value.trim() });
+      acct.aboutDraft = null;
+      acct.notice = "About me saved.";
+      renderAccount();
+    });
+    save.className = "btn primary";
+    actions.appendChild(save);
+    bar.appendChild(actions);
+    card.appendChild(bar);
+
+    function sync() {
+      count.textContent = ta.value.length + " / " + ABOUT_MAX;
+      var dirty = ta.value !== (currentUser.about || "");
+      bar.hidden = !dirty;
+      acct.aboutDraft = dirty ? ta.value : null;
+    }
+    ta.addEventListener("input", sync);
+    sync();
+    return card;
+  }
+
+  function renderAccount(focusId) {
+    var root = $("account-content");
+    root.textContent = "";
+    if (!currentUser) return;
+    var wrap = el("div", "acct");
+    wrap.appendChild(el("h2", null, "My Account"));
+    if (acct.notice) {
+      var n = el("p", "notice", acct.notice);
+      n.setAttribute("role", "status");
+      wrap.appendChild(n);
+    }
+    var rows = [
+      { key: "username", label: "Username", value: currentUser.username, action: "Edit" },
+      { key: "display", label: "Display name", value: currentUser.display, action: "Edit" },
+      { key: "email", label: "Email", value: currentUser.email, action: "Edit" },
+      { key: "phone", label: "Phone number", value: currentUser.phone ? formatPhone(currentUser) : "Not set", action: currentUser.phone ? "Edit" : "Add", unset: !currentUser.phone }
+    ];
+    var card = el("div", "acct-card");
+    rows.forEach(function (r) {
+      var row = el("div", "acct-row");
+      var head = el("div", "acct-head");
+      var info = el("div", "acct-info");
+      info.appendChild(el("div", "acct-label", r.label));
+      info.appendChild(el("div", "acct-value" + (r.unset ? " unset" : "") + (r.multi ? " multi" : ""), r.value));
+      head.appendChild(info);
+      var b = btn(r.action, function () {
+        acct.open = acct.open === r.key ? null : r.key;
+        acct.step = 1; acct.pending = ""; acct.code = ""; acct.notice = ""; acct.err = "";
+        renderAccount(acct.open ? "acct-" + r.key : null);
+      });
+      b.setAttribute("aria-label", r.action + " " + r.label.toLowerCase());
+      b.setAttribute("aria-expanded", acct.open === r.key ? "true" : "false");
+      head.appendChild(b);
+      row.appendChild(head);
+      if (acct.open === r.key) row.appendChild(r.key === "username" || r.key === "display" ? passwordPanel(r.key) : verifyPanel(r.key));
+      card.appendChild(row);
+    });
+    wrap.appendChild(card);
+    wrap.appendChild(aboutSection());
+    root.appendChild(wrap);
+    if (focusId && $(focusId)) $(focusId).focus();
+  }
+
+  /* Settings page */
+  var settingsEl = $("settings");
+  function openSettings() {
+    acct = { open: null, step: 1, pending: "", code: "", tries: 0, notice: "", err: "" };
+    renderAccount();
+    settingsEl.hidden = false;
+    $("settings-close").focus();
+  }
+  function closeSettings() {
+    settingsEl.hidden = true;
+    $("settings-btn").focus();
+  }
+  $("settings-btn").addEventListener("click", openSettings);
+  $("settings-close").addEventListener("click", closeSettings);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !settingsEl.hidden) closeSettings(); });
+
+  /* ---------- Send a friend request ---------- */
+  var addMsg = { text: "", ok: true };
+  function sendRequest(name) {
+    if (!name) return { ok: false, text: "Enter a username first." };
+    var low = name.toLowerCase();
+    var i;
+    if (currentUser && low === currentUser.username.toLowerCase()) return { ok: false, text: "You can't send a friend request to yourself." };
+    var accounts = loadAccounts();
+    var found = null;
+    for (i = 0; i < accounts.length; i++) {
+      if (accounts[i].username.toLowerCase() === low) found = accounts[i].username;
+    }
+    if (!found) return { ok: false, text: "No account exists with the username “" + name + "”. Check the spelling and try again." };
+    name = found;
+    for (i = 0; i < friends.length; i++) {
+      if (friends[i].name.toLowerCase() === low) return { ok: false, text: "You're already friends with " + friends[i].name + "." };
+    }
+    for (i = 0; i < pending.length; i++) {
+      if (pending[i].name.toLowerCase() === low) {
+        return pending[i].dir === "in"
+          ? { ok: false, text: pending[i].name + " already sent you a request. Accept it under Pending." }
+          : { ok: false, text: "You've already sent a request to " + pending[i].name + "." };
+      }
+    }
+    pending.push({ name: name, dir: "out" });
+    return { ok: true, text: "Friend request sent to " + name + "." };
+  }
+  function addForm(list) {
+    var wrap = el("div", "addform");
+    wrap.appendChild(el("h2", null, "Add Friend"));
+    wrap.appendChild(el("p", "hint", "Send a friend request using their username."));
+    var form = el("form", "addrow");
+    var input = el("input");
+    input.id = "friend-input";
+    input.type = "text";
+    input.maxLength = 32;
+    input.autocomplete = "off";
+    input.placeholder = "Enter a username";
+    input.setAttribute("aria-label", "Username");
+    var send = el("button", "btn primary", "Send Friend Request");
+    send.type = "submit";
+    form.appendChild(input);
+    form.appendChild(send);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      addMsg = sendRequest(input.value.trim());
+      render();
+      document.getElementById("friend-input").focus();
+    });
+    wrap.appendChild(form);
+    var status = el("p", "addstatus" + (addMsg.ok ? "" : " err"), addMsg.text);
+    status.setAttribute("role", "status");
+    wrap.appendChild(status);
+    list.appendChild(wrap);
+  }
+
+  /* ---------- Sidebar ---------- */
+  function renderSide() {
+    var navFriends = $("nav-friends");
+    navFriends.setAttribute("aria-current", view.type === "friends" ? "true" : "false");
+    var badge = $("nav-badge");
+    var inc = incomingCount();
+    badge.hidden = inc === 0;
+    badge.textContent = inc;
+
+    var list = $("dm-list");
+    list.textContent = "";
+    if (!dms.length) list.appendChild(el("p", "empty-side", "No conversations yet."));
+    dms.forEach(function (d) {
+      var b = el("button", "side-item");
+      b.type = "button";
+      b.setAttribute("aria-current", view.type === "dm" && view.name === d.name ? "true" : "false");
+      b.appendChild(avatar(d.name, true, false));
+      b.appendChild(el("span", "name", d.name));
+      b.addEventListener("click", function () { view = { type: "dm", name: d.name }; render(); });
+      list.appendChild(b);
+    });
+
+    if (currentUser) {
+      var av = $("me-avatar");
+      av.textContent = "";
+      var meAv = avatar(currentUser.display, false, true, currentUser.avatar);
+      meAv.setAttribute("data-status", statusOf(currentUser));
+      av.appendChild(meAv);
+      $("me-name").textContent = currentUser.display;
+      $("me-user").textContent = STATUS[statusOf(currentUser)].label;
+    }
+  }
+
+  /* ---------- Friends view ---------- */
+  function friendsView(main) {
+    var bar = el("header", "bar");
+    var title = el("div", "bar-title", "Friends");
+    var tabs = el("div", "tabs");
+
+    var allTab = el("button", "tab", "All");
+    allTab.type = "button";
+    allTab.setAttribute("aria-pressed", view.tab === "all" ? "true" : "false");
+    allTab.addEventListener("click", function () { view.tab = "all"; render(); });
+
+    var pendTab = el("button", "tab", "Pending");
+    pendTab.type = "button";
+    pendTab.setAttribute("aria-pressed", view.tab === "pending" ? "true" : "false");
+    if (pending.length) pendTab.appendChild(el("span", "badge", String(pending.length)));
+    pendTab.addEventListener("click", function () { view.tab = "pending"; render(); });
+
+    var addTab = el("button", "tab tab-add", "Add Friend");
+    addTab.type = "button";
+    addTab.setAttribute("aria-pressed", view.tab === "add" ? "true" : "false");
+    addTab.addEventListener("click", function () { view.tab = "add"; addMsg = { text: "", ok: true }; render(); });
+
+    tabs.appendChild(allTab);
+    tabs.appendChild(pendTab);
+    tabs.appendChild(addTab);
+    bar.appendChild(title);
+    bar.appendChild(tabs);
+    main.appendChild(bar);
+
+    var list = el("div", "list");
+    if (view.tab === "all") {
+      list.appendChild(el("p", "list-label", "All friends — " + friends.length));
+      if (!friends.length) list.appendChild(el("div", "empty", "You don't have any friends yet. Friend requests will show up under Pending."));
+      friends.forEach(function (f) {
+        var row = el("div", "row");
+        row.appendChild(avatar(f.name, false, f.online));
+        var info = el("div", "info");
+        info.appendChild(el("div", "who", f.name));
+        info.appendChild(el("div", "sub", f.status));
+        row.appendChild(info);
+        var actions = el("div", "actions");
+        actions.appendChild(btn("Message", function () { openDm(f.name); }));
+        row.appendChild(actions);
+        list.appendChild(row);
+      });
+    } else if (view.tab === "add") {
+      addForm(list);
+    } else {
+      list.appendChild(el("p", "list-label", "Pending — " + pending.length));
+      if (!pending.length) list.appendChild(el("div", "empty", "No pending requests."));
+      pending.slice().forEach(function (p) {
+        var row = el("div", "row");
+        row.appendChild(avatar(p.name, false, false));
+        var info = el("div", "info");
+        info.appendChild(el("div", "who", p.name));
+        info.appendChild(el("div", "sub", p.dir === "in" ? "Incoming friend request" : "Outgoing friend request"));
+        row.appendChild(info);
+        var actions = el("div", "actions");
+        function drop() { pending.splice(pending.indexOf(p), 1); }
+        if (p.dir === "in") {
+          actions.appendChild(btn("Accept", function () {
+            drop();
+            friends.push({ name: p.name, status: "Offline", online: false });
+            render();
+          }));
+          actions.appendChild(btn("Decline", function () { drop(); render(); }));
+        } else {
+          actions.appendChild(btn("Cancel", function () { drop(); render(); }));
+        }
+        row.appendChild(actions);
+        list.appendChild(row);
+      });
+    }
+    main.appendChild(list);
+  }
+
+  /* ---------- Conversation view ---------- */
+  function dmView(main) {
+    var d = findDm(view.name);
+    var bar = el("header", "bar");
+    var title = el("div", "bar-title");
+    title.appendChild(avatar(d.name, true, false));
+    title.appendChild(el("span", null, d.name));
+    bar.appendChild(title);
+    main.appendChild(bar);
+
+    var msgs = el("div", "msgs");
+    msgs.appendChild(el("p", "intro", "This is the beginning of your direct message history with " + d.name + "."));
+    d.messages.forEach(function (m) {
+      var row = el("div", "msg");
+      row.appendChild(avatar(m.from, false, false, m.mine && currentUser ? currentUser.avatar : null));
+      var body = el("div", "body");
+      var meta = el("div", "meta", m.from);
+      meta.appendChild(el("span", "time", m.time));
+      body.appendChild(meta);
+      body.appendChild(el("p", null, m.text));
+      row.appendChild(body);
+      msgs.appendChild(row);
+    });
+    main.appendChild(msgs);
+
+    var form = el("form", "composer");
+    var input = el("input");
+    input.id = "msg-input";
+    input.type = "text";
+    input.autocomplete = "off";
+    input.placeholder = "Message @" + d.name;
+    input.setAttribute("aria-label", "Message " + d.name);
+    form.appendChild(input);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = input.value.trim();
+      if (!v) return;
+      d.messages.push({ from: currentUser ? currentUser.display : "You", text: v, time: nowTime(), mine: true });
+      render();
+      document.getElementById("msg-input").focus();
+    });
+    main.appendChild(form);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function render() {
+    renderSide();
+    var main = $("main");
+    main.textContent = "";
+    if (view.type === "dm" && findDm(view.name)) dmView(main);
+    else { view = { type: "friends", tab: view.tab || "all" }; friendsView(main); }
+    var m = main.querySelector(".msgs");
+    if (m) m.scrollTop = m.scrollHeight;
+  }
+
+  $("nav-friends").addEventListener("click", function () { view = { type: "friends", tab: "all" }; render(); });
+  $("dm").addEventListener("click", function () { view = { type: "friends", tab: "all" }; render(); });
+
+  /* ---------- Your profile ---------- */
+  var STATUS = {
+    online: { label: "Online", color: "var(--good)", desc: "Your friends can see that you're online and available." },
+    idle: { label: "Idle", color: "var(--idle)", desc: "You're away for now. Your friends will see you as idle." },
+    dnd: { label: "Do Not Disturb", color: "var(--bad)", desc: "You don't want to be bothered. Your friends will see that you're busy." },
+    invisible: { label: "Invisible", color: "var(--muted)", desc: "You'll appear offline to everyone, but you can still use everything." }
+  };
+  function statusOf(u) { return STATUS[u.status] ? u.status : "online"; }
+  function shadeOf(name) {
+    var h = 0;
+    for (var i = 0; i < name.length; i++) h = (h + name.charCodeAt(i)) % shades.length;
+    return shades[h];
+  }
+  function newUid() {
+    var a = crypto.getRandomValues(new Uint32Array(3)), s = "1";
+    for (var i = 0; i < a.length; i++) s += ("000000" + (a[i] % 1000000)).slice(-6);
+    return s.slice(0, 18);
+  }
+
+  var prof = { statusOpen: false, noteEdit: false, copied: "" };
+  var profileEl = $("profile");
+  var meBtn = $("me-btn");
+
+  function pRow(label, onClick) {
+    var b = el("button", "p-row");
+    b.type = "button";
+    if (label != null) b.appendChild(el("span", null, label));
+    b.addEventListener("click", onClick);
+    return b;
+  }
+  function pDot(color) {
+    var d = el("span", "p-dot");
+    d.style.background = color;
+    return d;
+  }
+
+  /* Profile picture upload: pick a file, crop to a square, shrink to 256 px and save. */
+  function setPicMsg(t) {
+    prof.msg = t;
+    if (!profileEl.hidden) renderProfile();
+  }
+  function pickPicture() {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "image/png,image/jpeg,image/webp,image/gif";
+    inp.style.display = "none";
+    document.body.appendChild(inp);
+    function cleanup() { if (inp.parentNode) inp.parentNode.removeChild(inp); }
+    inp.addEventListener("change", function () {
+      var f = inp.files && inp.files[0];
+      cleanup();
+      if (f) readPicture(f);
+    });
+    inp.addEventListener("cancel", cleanup);
+    inp.click();
+  }
+  function readPicture(f) {
+    var okTypes = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+    if (okTypes.indexOf(f.type) < 0) { setPicMsg("Choose a PNG, JPG, WebP or GIF image."); return; }
+    if (f.size > 8 * 1024 * 1024) { setPicMsg("That image is too large. Choose one under 8 MB."); return; }
+    var fr = new FileReader();
+    fr.onerror = function () { setPicMsg("Couldn't read that image. Try another."); };
+    fr.onload = function () {
+      var im = new Image();
+      im.onerror = function () { setPicMsg("Couldn't read that image. Try another."); };
+      im.onload = function () {
+        var c = document.createElement("canvas");
+        c.width = 256; c.height = 256;
+        var x = c.getContext("2d");
+        x.fillStyle = "#101012";
+        x.fillRect(0, 0, 256, 256);
+        var s = Math.min(im.width, im.height);
+        x.drawImage(im, (im.width - s) / 2, (im.height - s) / 2, s, s, 0, 0, 256, 256);
+        var url;
+        try { url = c.toDataURL("image/jpeg", 0.85); }
+        catch (e) { setPicMsg("Couldn't use that image. Try another."); return; }
+        updateAccount(currentUser.username, { avatar: url });
+        prof.msg = "Profile picture updated.";
+        if (!profileEl.hidden) renderProfile();
+        renderSide();
+      };
+      im.src = fr.result;
+    };
+    fr.readAsDataURL(f);
+  }
+
+  function placeProfile() {
+    var r = meBtn.getBoundingClientRect();
+    var left = Math.max(8, Math.min(r.left, window.innerWidth - profileEl.offsetWidth - 8));
+    profileEl.style.left = left + "px";
+    if (r.top < 420) {
+      profileEl.style.top = (r.bottom + 8) + "px";
+      profileEl.style.bottom = "auto";
+      profileEl.style.maxHeight = Math.max(200, window.innerHeight - r.bottom - 16) + "px";
+    } else {
+      profileEl.style.bottom = (window.innerHeight - r.top + 8) + "px";
+      profileEl.style.top = "auto";
+      profileEl.style.maxHeight = Math.max(200, r.top - 16) + "px";
+    }
+  }
+
+  function renderProfile() {
+    var u = currentUser;
+    if (!u) return;
+    var st = statusOf(u);
+    profileEl.textContent = "";
+
+    var banner = el("div", "p-banner");
+    banner.style.background = shadeOf(u.display);
+    profileEl.appendChild(banner);
+
+    var top = el("div", "p-top");
+    var avWrap = el("div", "p-avwrap");
+    var av = avatar(u.display, false, true, u.avatar);
+    av.classList.add("xl");
+    av.setAttribute("data-status", st);
+    avWrap.appendChild(av);
+    var cam = el("button", "p-cam");
+    cam.type = "button";
+    cam.title = "Upload a profile picture";
+    cam.setAttribute("aria-label", "Upload a profile picture");
+    cam.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+    cam.addEventListener("click", pickPicture);
+    avWrap.appendChild(cam);
+    top.appendChild(avWrap);
+
+    if (prof.noteEdit) {
+      var input = el("input", "p-note-input");
+      input.type = "text";
+      input.maxLength = 60;
+      input.placeholder = "Set a status";
+      input.setAttribute("aria-label", "Status note");
+      input.value = u.note || "";
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          prof.noteEdit = false;
+          updateAccount(currentUser.username, { note: input.value.trim() });
+          renderProfile();
+        } else if (e.key === "Escape") {
+          e.stopPropagation();
+          prof.noteEdit = false;
+          renderProfile();
+        }
+      });
+      input.addEventListener("blur", function () {
+        if (!prof.noteEdit) return;
+        prof.noteEdit = false;
+        renderProfile();
+      });
+      top.appendChild(input);
+    } else {
+      var note = el("button", "p-note" + (u.note ? " has" : ""));
+      note.type = "button";
+      note.setAttribute("aria-label", u.note ? "Edit status note: " + u.note : "Set a status note");
+      note.appendChild(el("span", null, "+"));
+      note.appendChild(el("span", null, u.note || "Set a status"));
+      note.addEventListener("click", function () {
+        prof.noteEdit = true;
+        renderProfile();
+        var inp = profileEl.querySelector(".p-note-input");
+        if (inp) inp.focus();
+      });
+      top.appendChild(note);
+    }
+    profileEl.appendChild(top);
+
+    profileEl.appendChild(el("div", "p-name", u.display));
+    profileEl.appendChild(el("div", "p-user", u.username));
+    if (prof.msg) {
+      var pm = el("div", "p-msg", prof.msg);
+      pm.setAttribute("role", "status");
+      profileEl.appendChild(pm);
+    }
+
+    var body = el("div", "p-body");
+
+    if (u.about) {
+      var aboutCard = el("div", "p-card");
+      aboutCard.appendChild(el("div", "p-label", "About me"));
+      aboutCard.appendChild(el("div", "p-about", u.about));
+      body.appendChild(aboutCard);
+    }
+
+    var card1 = el("div", "p-card");
+    card1.appendChild(pRow("Edit Profile", function () { closeProfile(); openSettings(); }));
+    if (u.avatar) {
+      card1.appendChild(pRow("Remove Profile Picture", function () {
+        updateAccount(currentUser.username, { avatar: "" });
+        prof.msg = "Profile picture removed.";
+        renderProfile();
+        renderSide();
+      }));
+    }
+    var stRow = pRow(null, function () { prof.statusOpen = !prof.statusOpen; renderProfile(); });
+    stRow.setAttribute("aria-expanded", prof.statusOpen ? "true" : "false");
+    stRow.appendChild(pDot(STATUS[st].color));
+    stRow.appendChild(el("span", null, STATUS[st].label));
+    stRow.appendChild(el("span", "chev", prof.statusOpen ? "ⱜ" : "›"));
+    stRow.lastChild.textContent = prof.statusOpen ? "⌄" : "›";
+    card1.appendChild(stRow);
+    if (prof.statusOpen) {
+      var sub = el("div", "p-sub");
+      Object.keys(STATUS).forEach(function (key) {
+        var o = pRow(null, function () {
+          updateAccount(currentUser.username, { status: key });
+          prof.statusOpen = false;
+          renderProfile();
+          renderSide();
+        });
+        o.setAttribute("aria-pressed", key === st ? "true" : "false");
+        o.appendChild(pDot(STATUS[key].color));
+        var txt = el("span", "p-opt");
+        txt.appendChild(el("span", null, STATUS[key].label));
+        txt.appendChild(el("small", "p-optdesc", STATUS[key].desc));
+        o.appendChild(txt);
+        if (key === st) o.appendChild(el("span", "tick", "✓"));
+        sub.appendChild(o);
+      });
+      card1.appendChild(sub);
+    }
+    body.appendChild(card1);
+
+    var card2 = el("div", "p-card");
+    card2.appendChild(pRow("Switch Accounts", function () { closeProfile(); logOut(); }));
+    card2.appendChild(pRow(prof.copied || "Copy User ID", function () {
+      if (!currentUser.uid) updateAccount(currentUser.username, { uid: newUid() });
+      var id = currentUser.uid;
+      function done(t) {
+        prof.copied = t;
+        renderProfile();
+        setTimeout(function () {
+          if (prof.copied === t) { prof.copied = ""; if (!profileEl.hidden) renderProfile(); }
+        }, 2000);
+      }
+      try {
+        navigator.clipboard.writeText(id).then(function () { done("Copied!"); }, function () { done("ID: " + id); });
+      } catch (e) { done("ID: " + id); }
+    }));
+    body.appendChild(card2);
+
+    profileEl.appendChild(body);
+    if (!profileEl.hidden) placeProfile();
+  }
+
+  function openProfile() {
+    prof.statusOpen = false; prof.noteEdit = false; prof.copied = ""; prof.msg = "";
+    renderProfile();
+    profileEl.hidden = false;
+    meBtn.setAttribute("aria-expanded", "true");
+    placeProfile();
+    var first = profileEl.querySelector(".p-row");
+    if (first) first.focus();
+  }
+  function closeProfile() {
+    profileEl.hidden = true;
+    meBtn.setAttribute("aria-expanded", "false");
+    prof.statusOpen = false; prof.noteEdit = false; prof.copied = "";
+  }
+  meBtn.addEventListener("click", function () { if (profileEl.hidden) openProfile(); else closeProfile(); });
+  document.addEventListener("mousedown", function (e) {
+    if (profileEl.hidden) return;
+    if (profileEl.contains(e.target) || meBtn.contains(e.target)) return;
+    closeProfile();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !profileEl.hidden) { closeProfile(); meBtn.focus(); }
+  });
+  window.addEventListener("resize", function () { if (!profileEl.hidden) placeProfile(); });
+
+  /* ---------- Add-server dialog ---------- */
+  var add = $("add");
+  var overlay = $("overlay");
+  var note = $("note");
+  function openDialog() {
+    note.textContent = "";
+    overlay.hidden = false;
+    overlay.querySelector(".opt").focus();
+  }
+  function closeDialog(skipFocus) {
+    overlay.hidden = true;
+    if (skipFocus !== true) add.focus();
+  }
+  add.addEventListener("click", openDialog);
+  $("close").addEventListener("click", function () { closeDialog(); });
+  overlay.addEventListener("click", function (e) { if (e.target === overlay) closeDialog(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !overlay.hidden) closeDialog(); });
+  Array.prototype.forEach.call(overlay.querySelectorAll(".opt"), function (b) {
+    b.addEventListener("click", function () { note.textContent = b.getAttribute("data-msg"); });
+  });
+
+  /* ---------- Start ---------- */
+  (function start() {
+    var saved = load("session_v1", null);
+    var account = null;
+    if (saved) {
+      loadAccounts().forEach(function (a) { if (a.username === saved) account = a; });
+    }
+    if (account) enterApp(account);
+  })();
+</script>
+
+</body></html>
